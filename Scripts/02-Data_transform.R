@@ -130,8 +130,6 @@ transmute(flights_new,
 View(data_from_flights)
 
 
-View(data_from_flights)
 
-# asdasd my king in my castle
 
 
