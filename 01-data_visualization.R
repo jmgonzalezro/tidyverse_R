@@ -1,19 +1,19 @@
 library(tidyverse)
 
-# los coches con motor más grande consumen más combustible que los coches con motor más pequeño
-# La relación consumo/tamaño es lineal? No lineal? Exponencial? Positiva? Negativa?
+# los coches con motor m?s grande consumen m?s combustible que los coches con motor m?s peque?o
+# La relaci?n consumo/tama?o es lineal? No lineal? Exponencial? Positiva? Negativa?
 
 ggplot2::mpg
 view(mpg)
-# displ: tamaño del motor del coche en litros
+# displ: tama?o del motor del coche en litros
 help(mpg)
 
-# hwy: numero de millas por autopista por galón de combustible (1 Galón = 3.78541 litros)
+# hwy: numero de millas por autopista por gal?n de combustible (1 Gal?n = 3.78541 litros)
 
 ggplot(data = mpg) + 
   geom_point(mapping = aes(x = displ, y = hwy))
 
-#PLATNILLA PARA HACER UNA REPRESENTACIÓN GRÁFICA CON GGPLOT
+#PLATNILLA PARA HACER UNA REPRESENTACI?N GR?FICA CON GGPLOT
 #######################################################
 # ggplot(data = DATAFRAME) + 
 # GEOM_FUNCTION(mapping = aes(MAPPINGS))
@@ -28,7 +28,7 @@ ggplot(data = mpg) +
 ggplot(data = mpg) + 
   geom_point(mapping = aes(x = displ, y = hwy, color = class))
 
-# Tamaño de los puntos (conviene que sea numérico)
+# Tama?o de los puntos (conviene que sea num?rico)
 ggplot(data = mpg) +
   geom_point(mapping = aes(x = displ, y = hwy, size = class))
 
@@ -41,16 +41,16 @@ ggplot(data = mpg) +
 ggplot(data = mpg) +
   geom_point(mapping = aes(x = displ, y = hwy, shape = class))
 
-# Elección manual de estéticas (va fuera de los argumentos de la estética)
+# Elecci?n manual de est?ticas (va fuera de los argumentos de la est?tica)
 ggplot(data = mpg) +
   geom_point(mapping = aes(displ, hwy), color = "red")
-# color = nombre inglés en string
+# color = nombre ingl?s en string
 # size = 
 
 ggplot(data = mpg) +
   geom_point(mapping = aes(model, trans))
 
-# Hacer un mapeo de una estética con algo diferente a un nombre de una variable.
+# Hacer un mapeo de una est?tica con algo diferente a un nombre de una variable.
 ggplot(data = mpg) +
   geom_point(mapping = aes(x = displ, y = hwy, color = displ < 4))
 
@@ -75,7 +75,7 @@ ggplot(data = mpg) +
   geom_point(mapping = aes(x=displ, y = hwy)) +
   facet_grid(drv~.)
 
-# Diferentes GEOMETRíAS
+# Diferentes GEOMETR?AS
 ggplot(data = mpg) + 
   geom_point(mapping = aes(x = displ, y = hwy))
 
@@ -86,12 +86,12 @@ ggplot(data = mpg) +
   geom_smooth(mapping = aes(x = displ, y = hwy, linetype = drv))
 
 
-# Estos dos códigos son lo mismo 
+# Estos dos c?digos son lo mismo 
 ggplot(data = mpg) +
   geom_point(mapping = aes(x = displ, y = hwy)) + 
   geom_smooth(mapping = aes(x = displ, y = hwy))
 
-# Lo único que te restringe a hacerlo siempre con las mismas variables
+# Lo ?nico que te restringe a hacerlo siempre con las mismas variables
 ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) +
   geom_point() + 
   geom_smooth()
@@ -115,7 +115,7 @@ ggplot(data = diamonds) +
   geom_bar(mapping = aes(x = cut))
 
 
-# Diferentes tipos de aestéticas
+# Diferentes tipos de aest?ticas
 
 ggplot(data = diamonds) +
   geom_bar(mapping = aes(x = cut, fill = cut))
@@ -146,7 +146,7 @@ ggplot(data = diamonds, mapping = aes(x = cut, fill = clarity)) +
 ## position = jitter (solo tiene sentido en scatterplots)
 ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
   geom_point(position = "jitter")
-#son el mismo tipo de geometría, pero ggplot ya tiene jitter implementado
+#son el mismo tipo de geometr?a, pero ggplot ya tiene jitter implementado
 ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) +
   geom_jitter()
 
