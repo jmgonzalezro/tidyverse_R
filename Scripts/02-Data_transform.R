@@ -129,7 +129,58 @@ transmute(flights_new,
             ) -> data_from_flights
 View(data_from_flights)
 
+# Operaciones aritméticas: +, -, *, /, ^
+# Agregados de funciones: x/sum(x) : proporción sobre el total
+#                         x - mean(x): distancia respecto de media
+#                         (x - mean(x)) / sd(x) : tipificación
+#                         (x - min(x)) / (max(x) - min(x)): estandarizar entre [0 , 1]
 
+# Aritmética modular: %/% <- nos da el cociente de la división entera
+#                     %% <- resto de la división entera
+#                     x == y * (x%/%y) + (x%%y) <- algoritmo de euclides
 
+#Para sacar el timepo de vuelo de cad uno de los aviones, las horas y minutos que duró el vuelo
+transmute(flights,
+          air_time,
+          hour_air = air_time%/%60,
+          minute_air = air_time%%60
+          )
 
+# Logaritmos: log() <- logaritmo en base e, log2(), log10()
+# Offsets: lead(), lag(), que nos permiten barrer los datos hacia izda o dcha
+# se pueden usar con groupby
 
+df <- 1:12
+lag(df) #lag mueve hacia la derecha
+lag(lag(df))
+lead(df) #mueve hacia la izquierda
+
+# Funciones acumulativas: cumsum(), cumprod(), cummin(), cummax(), cummean()
+cumsum(df)
+cumprod(df)
+cummin(df)
+cummax(df)
+cummean(df)
+
+# Comparaciones lógicas: >, >=, <, <=, ==, !=
+transmute(flights,
+            dep_delay,
+            has_been_delayed = dep_delay >0
+            )
+# Rankings: min_rank()
+df <- c(7,14,8,1,2,3,3,3,NA,4)
+min_rank(df)
+min_rank(desc(df))
+
+row_number(df)
+dense_rank(df)
+percent_rank(df) #porcentaje relativo
+cume_dist(df) # redoneado con los dígitos que necesitemos. Son los percentiles
+ntile(df, n = 4) # te los ordena por percentiles
+
+transmute(flights,
+          dep_delay,
+          ntile(dep_delay, n = 100)
+          ) #ordenados por quantiles
+
+# Finalizado el módulo de transformación de datos
