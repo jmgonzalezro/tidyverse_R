@@ -184,3 +184,68 @@ transmute(flights,
           ) #ordenados por quantiles
 
 # Finalizado el módulo de transformación de datos
+
+# ejercicios
+transmute(flights,
+          dep_time,
+          sched_dep_time,
+          min_salid = dep_time*0.6,
+          min_previst_salid = sched_dep_time * 0.6
+          )
+ transmute(flights,
+           dep_time,
+           arr_time,
+           air_time,
+           new_air_time = dep_time*0.6 + air_time
+           )
+
+transmute(flights,
+          dep_time,
+          sched_dep_time,
+          dep_delay,
+          hour_dep = dep_time %/% 100,
+          min_dep = dep_time %% 100
+          )
+
+arrange(mutate(flights,
+               r_delay = min_rank(dep_delay)),
+        r_delay
+        )[1:10,]
+
+
+## SUMMARISE
+
+summarise(flights, delay = mean(dep_delay, na.rm = T))
+
+# Tiene mucha utilidad cuando hacemos agrupaciones
+
+by_month_group <- group_by(flights, year, month)
+summarise(by_month_group, delay = mean(dep_delay, na.rm = T))
+
+# en el caso de quererlo hacer una agrupación diaria
+
+by_day_group <- group_by(flights, year, month, day)
+summarise(by_day_group, delay = mean(dep_delay, na.rm = T))
+
+# también se puede calcular más cosas
+summarise(by_day_group,
+          delay = mean(dep_delay, na.rm = T),
+          median = median(dep_delay, na.rm = T),
+          min = min(dep_delay, na.rm = T))
+
+summarise(group_by(flights, carrier),
+          delay = mean(dep_delay, na.rm = T))
+
+transmute(summarise(group_by(flights, carrier),
+                    delay = mean(dep_delay, na.rm = T),
+                    sorted = min_rank(delay)
+                    )
+)
+
+mutate(summarise(group_by(flights, carrier),
+                    delay = median(dep_delay, na.rm = T),
+                    sorted = min_rank(delay)
+)
+)
+
+          
