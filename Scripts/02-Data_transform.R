@@ -183,7 +183,6 @@ transmute(flights,
           ntile(dep_delay, n = 100)
           ) #ordenados por quantiles
 
-# Finalizado el módulo de transformación de datos
 
 # ejercicios
 transmute(flights,
@@ -248,4 +247,240 @@ mutate(summarise(group_by(flights, carrier),
 )
 )
 
-          
+
+# PIPES, verbos necesarios de tidyverse
+
+group_by_dest <- group_by(flights, dest)
+delay <- summarise(group_by_dest,
+                   count = n(),
+                   dist = mean(distance, na.rm = T),
+                   delay = mean(arr_delay, na.rm = T)
+                   )
+View(delay)          
+delay <- filter(delay, count > 100, dest != "HNL") # para eliminar los que tienen menos de 100 y el destino es difenre te a honolulu
+
+ggplot(data = delay, mapping = aes(x = dist, y = delay)) + 
+        geom_point(aes(size = count), alpha = 0.2) + 
+        geom_smooth(se = F) + 
+        geom_text(aes(label = dest), alpha = 0.3)
+
+# Esto sería la forma más larga de realizarlo sin los pipes, pero
+# poniendo pipes podemos mejorar la sintaxis de la siguiente manera
+
+delay <- flights %>%
+        group_by(dest) %>%
+        summarise(
+                count = n(),
+                dist = mean(distance, na.rm = T),
+                delay = mean(arr_delay, na.rm = T)
+        ) %>%
+        filter(count > 100, dest != "HNL")
+
+# las pipes las podemos leer como "y entonces". Coge el data base flights
+# y entonces agrupa, y entonces sumariza, y entonces filtra
+
+
+## Para eliminar los NA de los datos
+flights %>%
+        group_by(year, month, day) %>%
+        summarise(mean = mean(dep_delay),
+                  sd = sd(dep_delay),
+                  count = n()
+                  )
+# Aquí se puede ver que arrastra todos los NA los datos
+# Los NA tienen un significado inherente, que representa un vuelo cancelado
+# en este dataset. Podríamos eliminarlos o quedarnos con los no cancelados
+not_cancelled = flights %>%
+        filter(!is.na(dep_delay), !is.na(arr_delay))
+
+not_cancelled %>%
+        group_by(year, month, day) %>%
+        summarise(mean = mean(dep_delay),
+                  sd = sd(dep_delay),
+                  count = n()
+        )
+
+delay_numtail <- not_cancelled %>%
+        group_by(tailnum) %>%
+        summarise(delay = mean(arr_delay))
+ggplot(data = delay_numtail, mapping = aes(x = delay)) +
+        geom_freqpoly(bimwidth = 5)  # es un pequeño histograma para variables continuas
+#bimwidth significa que cada 5 aviones tenemos 1 punt
+
+ggplot(data = delay_numtail, mapping = aes(x = delay)) +
+        geom_histogram(bimwidth = 5)
+
+
+delay_numtail <- not_canceled %>%
+        group_by(tailnum) %>%
+        summarise(delay = mean(arr_delay),
+        count = n()
+        )
+ggplot(data = delay_numtail, mapping = aes(x = count, y = delay)) + 
+        geom_point(alpha = 0.2)
+
+# POdemos filtrar los que se acercan a cero
+delay_numtail %>%
+        filter(count>30) %>%
+        ggplot(mapping = aes(x=count, y=delay)) +
+        geom_point(alpha = 0.2)
+
+
+
+
+
+
+###Para ver todo lo aprendido con el paquete de baseball
+View(Lahman::Batting)
+
+batting <- as_tibble(Lahman::Batting)
+
+batters <- batting %>%
+        group_by(playerID) %>%
+        summarise(hits = sum(H, na.rm = T),
+                  bats = sum(AB, na.rm = T),
+                  bat.average = hits / bats
+          )
+
+batters %>%
+        filter(bats > 100) %>%
+        ggplot(mapping = aes(x = bats, y = bat.average)) +
+        geom_point(alpha = 0.2) +
+        geom_smooth() # se = F para quitar el error standar
+
+# para hacer un ranking
+batters %>%
+        filter(bats > 100) %>%
+        arrange(desc(bat.average))
+
+
+# Funciones útiles para usar con summarise
+
+# Medidas de Centralización (media y mediana)
+not_cancelled %>%
+        group_by(carrier) %>%
+        summarise(
+                mean = mean(arr_delay),
+                mean2 = mean(arr_delay[arr_delay >0]),
+                median = median(arr_delay)
+        )
+
+# Medidas de dispersión (desviación, rango intercuartílico...)
+not_canceled %>%
+        group_by(carrier) %>%
+        summarise(
+                sd = sd(arr_delay),
+                iqr = IQR(arr_delay),
+                mad = mad(arr_delay)
+        ) %>%
+        arrange(desc(sd))
+
+# Medidas de orden. (quantiles...)
+not_cancelled %>%
+        group_by(carrier) %>%
+        summarise(
+                first = min(arr_delay),
+                q1 = quantile(arr_delay, 0.25),
+                median = quantile(arr_delay, 0.75),
+                q3 = quantile(arr_delay, 0.75),
+                last = max(arr_delay)
+        )
+
+# Medidas de posición
+not_cancelled %>%
+        group_by(carrier) %>%
+        summarise(
+                first_dep = first(dep_time),
+                second_dep = nth(dep_time, 2),
+                third_dep = nth(dep_time, 3),
+                last_dep = last(dep_time)
+        )
+
+not_cancelled %>%
+        group_by(carrier) %>%
+        mutate(rank = min_rank(desc(dep_time))) %>%
+        filter(rank %in% range(rank))
+
+not_cancelled %>% count(dest)
+not_cancelled %>% count(tailnum, wt = distance) # suma pondereda, weighted
+
+
+## Sum y mean de valores lógicos = hay que identificarlo con el conteo y la proporción
+not_cancelled %>%
+        group_by(year, month, day) %>%
+        summarise(n_prior_5 = sum(dep_time < 500))
+
+not_cancelled %>%
+        group_by(carrier) %>%
+        summarise(more_than_hour_delay = mean(arr_delay > 60)) %>%
+        arrange(desc(more_than_hour_delay))
+
+
+# Agrupaciones múltipples
+# se pueden hacer con sumarize con el sumatorio anterior y ungroup para deshacerlo
+
+flights %>%
+        group_by(year, month, day) %>%
+        filter(rank(desc(arr_delay))<10)
+
+popular_dest <- flights %>%
+        group_by(dest) %>%
+        filter(n() > 365)
+View(popular_dest)
+
+popular_dest %>%
+        filter(arr_delay > 0 ) %>%
+        mutate(prop_delay = arr_delay / sum(arr_delay)) %>%
+        select(year:day, dest, arr_delay, prop_delay)
+
+
+### Ejercicios
+
+media_arr_delay <- flights %>%
+        group_by(carrier) %>%
+        summarise(media_arr_delay = median(arr_delay, na.rm = T))
+
+View(media_arr_delay)
+
+View(flights)
+
+destino_mas_delay <- flights %>%
+        group_by(dest) %>%
+        arrange(min_rank(arr_delay))
+(destino_mas_delay)
+
+numero_delay <- flights %>%
+        filter(arr_delay > 0 ) %>%
+        group_by(carrier) %>%
+        summarise(
+                n = rank(n())
+        )
+        
+View(numero_delay)
+
+destinos <- flights %>%
+        group_by(dest) %>%
+        count(dest)
+View(destinos)
+
+porcent_vuelos_ret_jfk <- not_cancelled %>%
+        group_by(dest) %>%
+        summarise(mean = mean(arr_delay),
+                  sv = sd(arr_delay),
+                  q9 = quantile(arr_delay, .9)
+                  )
+View(porcent_vuelos_ret_jfk)
+
+porcent_vuelos_ret_jfk <- not_cancelled %>%
+        filter(dest == "JFK")
+
+# 
+# - La compañía con mayor media de vuelos retrasados es F9 (6) y la que menos media de vuelos retrasados tiene es AS (-17)
+# 
+# - El destino que mayor retraso ha sufrido es SFO seguido de LAX
+# 
+# - La compañía con mayor número de retrasos es EV con 24484 y la que menos es OO con 10
+# 
+# - El destino con más número de vuelos es ORD seguido por ATL
+# 
+# -El destino con la mayor desviación típica es HNL seguido de TUL
