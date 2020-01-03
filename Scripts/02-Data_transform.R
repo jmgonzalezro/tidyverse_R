@@ -484,3 +484,41 @@ porcent_vuelos_ret_jfk <- not_cancelled %>%
 # - El destino con más número de vuelos es ORD seguido por ATL
 # 
 # -El destino con la mayor desviación típica es HNL seguido de TUL
+
+not_cancelled %>%
+        group_by(dest) %>%
+        tally()
+
+
+not_cancelled %>%
+        group_by(tailnum) %>%
+        tally(wt = distance)
+
+
+cancelled <- flights %>%
+        filter(is.na(dep_time))
+cancelled
+
+cancelled %>%
+        group_by(year, month, day) %>%
+        summarize(
+                n = n(),
+                
+        )
+
+
+flights %>% count(is.na(dep_time))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
