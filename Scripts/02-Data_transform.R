@@ -495,28 +495,52 @@ not_cancelled %>%
         tally(wt = distance)
 
 
-cancelled <- flights %>%
-        filter(is.na(dep_time))
-cancelled
-
-cancelled %>%
+flights %>%
         group_by(year, month, day) %>%
-        summarize(
+        filter(is.na(dep_delay)) %>% # aquí ya estamos solo filtrando los cancelados
+        summarise(
                 n = n(),
-                
+                media = mean() # no da por el mero hecho de que la media de los cancelados NA es NA
         )
 
+not_cancelled %>%
+        filter(dep_delay > 0) %>%
+        mutate(prop_delay = dep_delay / sum(dep_delay)) %>%
+        select(year:day, dest, dep_delay, prop_delay)
 
-flights %>% count(is.na(dep_time))
+flights %>%
+        mutate(prop_delay = dep_delay / sum(dep_delay), na.rm = T) %>%
+        group_by(year, month, day) %>%
+        filter(is.na(dep_delay)) %>%
+        count(dep_delay)
+
+flights %>%
+        group_by(carrier) %>%
+        filter(is.na(dep_delay)) %>%
+        count(sort = T)
 
 
+flights %>%
+        group_by(carrier, dest) %>%
+        summarise(n())
 
 
+flights %>%
+        group_by(tailnum) %>%
+        mutate(rank = min_rank(desc(dep_time))) %>%
+        select(carrier, tailnum, rank) %>%
+        arrange(rank)
 
 
+flights %>%
+        filter(!is.na(dep_delay)) %>%
+        arrange(dep_delay) %>%
+        select(hour, minute)
 
 
-
+flights %>%
+        filter(!is.na(dep_delay)) %>%
+        arrange(dep_delay)
 
 
 
