@@ -19,7 +19,7 @@ nycflights13::flights
 # select() -> seleccionar variables por sus nombres
 # mutate() -> crea nuevas variables con funciones a partir de las existentes
 # summarise() -> colapsar varios valores para dar un resumen de los mismos
- 
+
 # group_by() -> opera la función a la que acompaña grupo a grupo
 
 # 1- Data fram
@@ -111,22 +111,22 @@ flights_new <- select(flights,
 mutate(flights_new,
        time_gain = arr_delay - dep_delay,    # diff_t (min)
        flight_speed = distance/(air_time/60) #v = s/t (km/h)
-       )
+)
 
 mutate(flights_new,
        time_gain = arr_delay - dep_delay,    # diff_t (min)
        air_time_hour = air_time/60,
        flight_speed = distance/(air_time/60), #v = s/t (km/h)
        time_gian_per_hour = time_gain / air_time_hour
-        ) -> flights_new
+) -> flights_new
 #asignándole el data set al final así te quedas con las varaibales viejas y las nuevas
 
 transmute(flights_new,
-            time_gain = arr_delay - dep_delay,
-            air_time_hour = air_time/60,
-            flight_speed = distance/(air_time/60),
-            time_gian_per_hour = time_gain / air_time_hour
-            ) -> data_from_flights
+          time_gain = arr_delay - dep_delay,
+          air_time_hour = air_time/60,
+          flight_speed = distance/(air_time/60),
+          time_gian_per_hour = time_gain / air_time_hour
+) -> data_from_flights
 View(data_from_flights)
 
 # Operaciones aritméticas: +, -, *, /, ^
@@ -144,7 +144,7 @@ transmute(flights,
           air_time,
           hour_air = air_time%/%60,
           minute_air = air_time%%60
-          )
+)
 
 # Logaritmos: log() <- logaritmo en base e, log2(), log10()
 # Offsets: lead(), lag(), que nos permiten barrer los datos hacia izda o dcha
@@ -164,9 +164,9 @@ cummean(df)
 
 # Comparaciones lógicas: >, >=, <, <=, ==, !=
 transmute(flights,
-            dep_delay,
-            has_been_delayed = dep_delay >0
-            )
+          dep_delay,
+          has_been_delayed = dep_delay >0
+)
 # Rankings: min_rank()
 df <- c(7,14,8,1,2,3,3,3,NA,4)
 min_rank(df)
@@ -181,7 +181,7 @@ ntile(df, n = 4) # te los ordena por percentiles
 transmute(flights,
           dep_delay,
           ntile(dep_delay, n = 100)
-          ) #ordenados por quantiles
+) #ordenados por quantiles
 
 
 # ejercicios
@@ -190,13 +190,13 @@ transmute(flights,
           sched_dep_time,
           min_salid = dep_time*0.6,
           min_previst_salid = sched_dep_time * 0.6
-          )
- transmute(flights,
-           dep_time,
-           arr_time,
-           air_time,
-           new_air_time = dep_time*0.6 + air_time
-           )
+)
+transmute(flights,
+          dep_time,
+          arr_time,
+          air_time,
+          new_air_time = dep_time*0.6 + air_time
+)
 
 transmute(flights,
           dep_time,
@@ -204,12 +204,12 @@ transmute(flights,
           dep_delay,
           hour_dep = dep_time %/% 100,
           min_dep = dep_time %% 100
-          )
+)
 
 arrange(mutate(flights,
                r_delay = min_rank(dep_delay)),
         r_delay
-        )[1:10,]
+)[1:10,]
 
 
 ## SUMMARISE
@@ -238,12 +238,12 @@ summarise(group_by(flights, carrier),
 transmute(summarise(group_by(flights, carrier),
                     delay = mean(dep_delay, na.rm = T),
                     sorted = min_rank(delay)
-                    )
+)
 )
 
 mutate(summarise(group_by(flights, carrier),
-                    delay = median(dep_delay, na.rm = T),
-                    sorted = min_rank(delay)
+                 delay = median(dep_delay, na.rm = T),
+                 sorted = min_rank(delay)
 )
 )
 
@@ -255,7 +255,7 @@ delay <- summarise(group_by_dest,
                    count = n(),
                    dist = mean(distance, na.rm = T),
                    delay = mean(arr_delay, na.rm = T)
-                   )
+)
 View(delay)          
 delay <- filter(delay, count > 100, dest != "HNL") # para eliminar los que tienen menos de 100 y el destino es difenre te a honolulu
 
@@ -286,7 +286,7 @@ flights %>%
         summarise(mean = mean(dep_delay),
                   sd = sd(dep_delay),
                   count = n()
-                  )
+        )
 # Aquí se puede ver que arrastra todos los NA los datos
 # Los NA tienen un significado inherente, que representa un vuelo cancelado
 # en este dataset. Podríamos eliminarlos o quedarnos con los no cancelados
@@ -314,7 +314,7 @@ ggplot(data = delay_numtail, mapping = aes(x = delay)) +
 delay_numtail <- not_canceled %>%
         group_by(tailnum) %>%
         summarise(delay = mean(arr_delay),
-        count = n()
+                  count = n()
         )
 ggplot(data = delay_numtail, mapping = aes(x = count, y = delay)) + 
         geom_point(alpha = 0.2)
@@ -340,7 +340,7 @@ batters <- batting %>%
         summarise(hits = sum(H, na.rm = T),
                   bats = sum(AB, na.rm = T),
                   bat.average = hits / bats
-          )
+        )
 
 batters %>%
         filter(bats > 100) %>%
@@ -455,7 +455,7 @@ numero_delay <- flights %>%
         summarise(
                 n = rank(n())
         )
-        
+
 View(numero_delay)
 
 destinos <- flights %>%
@@ -468,7 +468,7 @@ porcent_vuelos_ret_jfk <- not_cancelled %>%
         summarise(mean = mean(arr_delay),
                   sv = sd(arr_delay),
                   q9 = quantile(arr_delay, .9)
-                  )
+        )
 View(porcent_vuelos_ret_jfk)
 
 porcent_vuelos_ret_jfk <- not_cancelled %>%
@@ -486,6 +486,10 @@ porcent_vuelos_ret_jfk <- not_cancelled %>%
 # -El destino con la mayor desviación típica es HNL seguido de TUL
 
 not_cancelled %>%
+        count(dest)
+
+
+not_cancelled %>%
         group_by(dest) %>%
         tally()
 
@@ -500,7 +504,7 @@ flights %>%
         filter(is.na(dep_delay)) %>% # aquí ya estamos solo filtrando los cancelados
         summarise(
                 n = n(),
-                media = mean() # no da por el mero hecho de que la media de los cancelados NA es NA
+                media = mean(dep_delay, na.rm = ) # no da por el mero hecho de que la media de los cancelados NA es NA
         )
 
 not_cancelled %>%
@@ -519,10 +523,27 @@ flights %>%
         filter(is.na(dep_delay)) %>%
         count(sort = T)
 
-
+# 5 Efectos que producen los retrasos por culpa de los malos aeropuertops vs malas compañías
 flights %>%
         group_by(carrier, dest) %>%
-        summarise(n())
+        summarise(n = n(),
+                  delay = mean(dep_delay, na.rm = T),
+                  delay_carrier = ,
+                  delay_dest = ) # LO DEJO AQui. MIRAR MAÑANA ESTA ZONA. MIRAR EL RETRASO QUE HAY POR COMPAÑÍA Y AEROPUERTO. VER EL RETRASO DE LA COMPAÑÍA SOLO. VER EL RETRASO DEL AEROPUERTO
+# SOLO, Y VER LA SUMA O DIVISIÓN ETNRE LOS DOS
+
+malas_comps <- flights %>%
+        group_by(carrier) %>%
+        filter(rank(desc(dep_delay)) < 10)
+malas_comps        
+
+malos_dest <- flights %>%
+        group_by(dest) %>%
+        filter(rank(desc(dep_delay)) < 10)
+malos_dest        
+
+
+
 
 
 flights %>%
