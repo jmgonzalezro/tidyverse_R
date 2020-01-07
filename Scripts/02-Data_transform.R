@@ -524,22 +524,28 @@ flights %>%
         count(sort = T)
 
 # 5 Efectos que producen los retrasos por culpa de los malos aeropuertops vs malas compañías
+# Intenta desentrañar los efectos que producen los retrasos por culpa de malos aeropuertos vs malas compañías aéreas. Por ejemplo, intenta usar 
+# flights %>% group_by(carrier, dest) %>% summarise(n())
+
 flights %>%
         group_by(carrier, dest) %>%
         summarise(n = n(),
                   delay = mean(dep_delay, na.rm = T),
-                  delay_carrier = ,
+                  delay_carrier = mean(dep_delay),
                   delay_dest = ) # LO DEJO AQui. MIRAR MAÑANA ESTA ZONA. MIRAR EL RETRASO QUE HAY POR COMPAÑÍA Y AEROPUERTO. VER EL RETRASO DE LA COMPAÑÍA SOLO. VER EL RETRASO DEL AEROPUERTO
 # SOLO, Y VER LA SUMA O DIVISIÓN ETNRE LOS DOS
 
 malas_comps <- flights %>%
         group_by(carrier) %>%
-        filter(rank(desc(dep_delay)) < 10)
+        filter(rank(desc(dep_delay)) < 10) %>%
+        summarise(n())
 malas_comps        
 
 malos_dest <- flights %>%
         group_by(dest) %>%
-        filter(rank(desc(dep_delay)) < 10)
+        filter(rank(desc(dep_delay)) < 10) %>%
+        summarise(n())
+
 malos_dest        
 
 
@@ -548,20 +554,610 @@ malos_dest
 
 flights %>%
         group_by(tailnum) %>%
-        mutate(rank = min_rank(desc(dep_time))) %>%
-        select(carrier, tailnum, rank) %>%
-        arrange(rank)
+        arrange(rank(desc(arr_delay))) %>%
+        select(carrier, tailnum)
 
 
 flights %>%
         filter(!is.na(dep_delay)) %>%
-        arrange(dep_delay) %>%
-        select(hour, minute)
+        arrange(rank(desc(dep_delay))) %>%
+        select(hour, day)
+
+# Para cada destino, calcula el total de minutos de retraso acumulado.
+
+#Para cada uno de ellos, calcula la proporción del total de retraso para dicho destino.
+flights %>%
+        group_by(dest)%>%
+        summarize(n = n(),
+                  sum = sum(dep_delay, na.rm = T),
+                  proporcion = sum / n)
 
 
 flights %>%
-        filter(!is.na(dep_delay)) %>%
-        arrange(dep_delay)
+        group_by(tailnum) %>%
+        lead(dep_delay)
+
+flights %>%
+        group_by(tailnum) %>%
+        mutate(siguiente = lead(dep_delay, order_by = tailnum),
+               anterior = lag(dep_delay, order_by = tailnum))
+
+# 11
+
+flights %>%
+        arrange(carrier)
+        
+
+
+##########################################################################################################################
+
+
+Intenta describir con frases entendibles el conjunto de vuelos retrasados. Intenta dar afirmaciones como por ejemplo:
+        
+        - Un vuelo tiende a salir unos 20 minutos antes el 50% de las veces y a salir tarde el 50% de las veces restantes.
+
+- Los vuelos de la compañía XX llegan siempre 20 minutos tarde
+
+- El 95% de los vuelos a HNL llegan a tiempo, pero el 5% restante se retrasan más de 3 horas.
+
+Intenta dar por lo menos 5 afirmaciones verídicas en base a los datos que tenemos disponibles.
+
+not_cancelled_hour <- not_cancelled %>%
+        
+        mutate(hour_dep_time = dep_time %/% 100)
+
+
+
+view(not_cancelled_hour %>% group_by(origin, hour_dep_time) %>%
+             
+             filter(month ==8, origin == "EWR") %>%
+             
+             summarise(total_flights = n(),
+                       
+                       total_dep_delay = sum(dep_delay)) %>%
+             
+             arrange(hour_dep_time))
+
+# En agosto, desde el aeropuerto de EWR, la hora pico de mayor numero de vuelos en el dia es de
+
+# 6 a 7am, pero paradogicamente, a esa hora, todos los vuelos salen antes de la hora prevista
+
+# y la peor hora para volar es entre las 18 y 19 dado que es cuando se tienen mas retrasos en salidas
+
+
+
+not_cancelled %>% group_by(carrier, origin, dest) %>%
+        
+        summarise(total_flights = n(),
+                  
+                  flights_per_day = total_flights / 365,
+                  
+                  mean_delay = mean(dep_delay)) %>%
+        
+        filter(carrier == "EV" | carrier == "B6", total_flights > 100) %>%
+        
+        arrange(desc(total_flights))
+
+# Las compañias con mayor retraso son EV y B6 
+
+# Para la compañia B6, el aeropuerto donde mas viejos saca es JFK, con 114 vuelos promedio dia,
+
+# para la compañia EV, el aeropuerto donde mas viejos saca es EWR, tambien com 114 vuelos dia,
+
+# pero es mas eficiente B6 porque esos 114 vuelos diarios los saca con un promedio de dep_delay
+
+# de 12.7 min, contra 20 min de EV
+
+
+
+not_cancelled %>% group_by(year) %>%
+        
+        ##filter(arr_delay > 0) %>%
+        
+        summarise(total_flights = n(),
+                  
+                  dep_delayed = sum(dep_delay >= 0) / total_flights,
+                  
+                  arr_delayed = sum(arr_delay >= 0) / total_flights,
+                  
+                  dep_ontime = sum(dep_delay < 0) / total_flights)
+
+# Por que los vuelos aterrizan tarde?
+
+# el 73% de los vuelos que aterrizaron tarde, fue porque salieron tambien tarde. El resto
+
+# es porque los demoraron en el aterrizaje
+
+
+
+not_cancelled %>% group_by(origin, dest) %>%
+        
+        summarise(min(air_time),
+                  
+                  median(air_time),
+                  
+                  mean(air_time),
+                  
+                  max(air_time),
+                  
+                  dif = (max(air_time) - min(air_time))*100 / min(air_time),
+                  
+                  avg_distance = mean(distance)
+                  
+        ) %>%
+        
+        arrange(desc(dif))
+
+
+
+
+
+not_cancelled %>% group_by(carrier, origin, dest) %>%
+        
+        filter(origin == "LGA" & dest == "ORD") %>%
+        
+        summarise(total_flights = n(),
+                  
+                  mean_dep_delay = mean(dep_delay),
+                  
+                  perc_dep_delayed = mean(dep_delay>0),
+                  
+                  mean_arr_delay = mean(arr_delay),
+                  
+                  perc_arr_delayed = mean(arr_delay>0)) %>%
+        
+        arrange(desc(total_flights))
+
+
+
+not_cancelled %>% filter(origin == "LGA" & dest == "ORD") %>%
+        
+        ggplot(mapping = aes(x= dep_delay, y= arr_delay)) +
+        
+        geom_point(alpha = 0.2) +
+        
+        geom_smooth(aes(color=carrier))
+
+# Comportamiento de la ruta mas concurrida % vuelos a tiempo, % vuelos retrasados
+
+# con el carrier AA, el 29% de los vuelos salen tarde y el 30% llegan tarde.
+
+# con el carrier UA, el 38% de los vuelos salen tarde y el 38% llegan tarde.
+
+
+
+
+
+not_cancelled %>% group_by(carrier, origin, dest) %>%
+        
+        summarise(total_flights = n(),
+                  
+                  total_delay = sum(dep_delay) + sum(arr_delay),
+                  
+                  avg_delay = total_delay / total_flights) %>%
+        
+        filter(total_flights > 365) %>%
+        
+        arrange(desc(avg_delay))
+
+# TOP 3 de carriers / rutas que nunca (o en un alto %) tienen retrasos. Las MEJORES
+
+#teniendo en cuenta solo las rutas que tienen mas de 365 vuelos al año, las 3 mejores
+
+#son:
+
+# carrier origin dest  total_flights total_delay avg_delay
+
+# <chr>   <chr>  <chr>         <int>       <dbl>     <dbl>
+
+# 1 AS      EWR    SEA             709       -2907    -4.10
+
+# 2 B6      EWR    SJU             378       -1298    -3.43
+
+# 3 US      LGA    BOS            4002      -11782    -2.94
+
+
+
+# TOP 3 de carriers / rutas que siempre (o en un alto %) tienen retrasos. Las PEORES
+
+# carrier origin dest  total_flights total_delay avg_delay
+
+# <chr>   <chr>  <chr>         <int>       <dbl>     <dbl>
+
+# 1 EV      EWR    DSM             390       20684      53.0
+
+# 2 EV      EWR    RIC            1615       84363      52.2
+
+# 3 EV      LGA    CLE             388       18999      49.0
+
+
+
+# En los retrasos, que culpa tienen los aeropuertos de Origen y que culpa los de destino?
+
+not_cancelled %>% group_by(year) %>%
+        
+        summarise(total_flights = n(),
+                  
+                  total_delay = sum(dep_delay>0) + sum(arr_delay>0),
+                  
+                  count_depDelayed = sum(dep_delay>0),
+                  
+                  perc_depDelayed = mean(dep_delay>0),
+                  
+                  count_arrDelayed = sum(arr_delay>0),
+                  
+                  perc_arrDelayed = mean(arr_delay>0))
+
+# del total de vuelos (327k), el 39% son vuelos retrasados en el departure aurport, el 40% en
+
+# en el arrival airport. El restante son vuelos que no estan retrasados
+
+Da una versión equivalente a las pipes siguientes sin usar la función count:
+        
+        not_cancelled %>% count(dest)
+
+not_cancelled %>% count(tailnum, wt = distance)
+
+not_cancelled %>% count(dest)
+
+summarise(group_by(not_cancelled, dest),n = n()) # sin pipes y sin count
+
+group_by(not_cancelled, dest) %>% summarise(n = n()) # con pipes y sin count
+
+
+
+not_cancelled %>% count(tailnum, wt = distance)
+
+summarise(group_by(not_cancelled, tailnum), sum(distance))
+
+Para definir un vuelo cancelado hemos usado la función
+
+(is.na(dep_delay) | is.na(arr_delay))
+
+Intenta dar una definición que sea mejor, ya que la nuestra es un poco subóptima. ¿Cuál es la columna más importante?
+        
+        flights %>% filter(is.na(dep_delay) | is.na(arr_delay))
+
+# Segun la sentencia anterior, los cancelados son 9,430
+
+
+
+flights %>% filter(is.na(dep_time) | is.na(arr_time))
+
+# si usamos mejor los campos dep_time y arr_time, los cancelados realmente son 8,713
+
+Investiga si existe algún patrón del número de vuelos que se cancelan cada día.
+
+Investiga si la proporción de vuelos cancelados está relacionada con el retraso promedio por día en los vuelos.
+
+Investiga si la proporción de vuelos cancelados está relacionada con el retraso promedio por aeropuerto en los vuelos.
+
+¿Qué compañía aérea sufre los peores retrasos?
+        
+        flights$monthday <- paste(flights$month,flights$day) #concatene month y day
+
+view(flights)
+
+group_by(flights, monthday) %>%
+        
+        filter(is.na(dep_time) | is.na(arr_time)) %>%
+        
+        summarise(count= n()) %>%
+        
+        ggplot(aes(x= monthday, y= count)) +
+        
+        geom_point(alpha = 0.2) +
+        
+        geom_smooth()
+
+# Hay un incremento en la cancelacion de vuelos que comienza el dia 1 de cada mes,
+
+# llegando a tu tope maximo el 10 de cada mes y luego baja al promedio el 15 del mes
+
+
+
+# Investiga si la proporción de vuelos cancelados está relacionada con el retraso
+
+# promedio por día en los vuelos.
+
+flights %>% mutate(weekDay = weekdays(time_hour)) %>%
+        
+        group_by(day, weekDay) %>% #filter(weekDay == "martes") %>%
+        
+        summarise(total_flights = n(),
+                  
+                  canc_dep = sum(is.na(dep_time)),
+                  
+                  canc_arr = sum(is.na(arr_time)),
+                  
+                  count_depDelayed = sum(!is.na(dep_delay) & dep_delay> 0),
+                  
+                  count_arrDelayed = sum(!is.na(arr_delay) & arr_delay> 0) ) %>%
+        
+        ggplot(aes(x = day, y = total_flights, color= weekDay)) +
+        
+        geom_smooth(aes(y = count_depDelayed), show.legend= F)+
+        
+        geom_smooth(aes(y= canc_dep), show.legend= F) +
+        
+        facet_wrap(~weekDay, as.table = TRUE) +
+        
+        geom_point(aes(y = count_depDelayed), shape=23) +
+        
+        geom_point(aes(y = canc_dep), shape=22)
+
+#No existe ninguna relacion, ni comparandolos por dia de la semana, ni por dia del mes
+
+
+
+# Investiga si la proporción de vuelos cancelados está relacionada con el retraso
+
+# promedio por aeropuerto en los vuelos.
+
+group_by(flights, dest) %>%
+        
+        summarise(total_flights = n(),
+                  
+                  canc_dep = sum(is.na(dep_time)),
+                  
+                  depDelayed = sum(!is.na(dep_delay) & dep_delay> 0),
+                  
+                  canc_arr = sum(is.na(arr_time)),
+                  
+                  arrDelayed = sum(!is.na(arr_delay) & arr_delay> 0)) %>%
+        
+        arrange(desc(canc_arr))
+
+
+
+ggplot(aes(x= dest, y = total_flights)) +
+        
+        geom_smooth(aes(y = arrDelayed), show.legend= F)+
+        
+        geom_smooth(aes(y= canc_arr), show.legend= F) +
+        
+        geom_point(aes(y = arrDelayed), shape=23, colour= "red") +
+        
+        geom_point(aes(y = canc_arr), shape=22, colour = "blue")
+
+# No hay ninguna relacion.
+
+
+
+# ¿Qué compañía aérea sufre los peores retrasos?
+
+group_by(flights, carrier) %>%
+        
+        summarise(total_flights = n(),
+                  
+                  canc_dep = sum(is.na(dep_time)),
+                  
+                  depDelayed = sum(!is.na(dep_delay) & dep_delay> 0),
+                  
+                  canc_arr = sum(is.na(arr_time)),
+                  
+                  arrDelayed = sum(!is.na(arr_delay) & arr_delay> 0),
+                  
+                  total_delay = depDelayed + arrDelayed) %>%
+        
+        arrange(desc(arrDelayed))
+
+# En total, la mas retrasada es UA, en el dep es tambien UA, en el arr es EV
+
+Difícil: Intenta desentrañar los efectos que producen los retrasos por culpa de malos aeropuertos vs malas compañías aéreas. Por ejemplo, intenta usar 
+
+flights %>% group_by(carrier, dest) %>% summarise(n())
+
+group_by(flights, carrier, dest) %>%
+        
+        summarise(total_flights = n(),
+                  
+                  arrDelayed = sum(!is.na(arr_delay) & arr_delay> 0)) %>%
+        
+        arrange(desc(arrDelayed))
+
+¿Qué hace el parámetro sort como argumento de count()? ¿Cuando puede sernos útil?
+        
+        Vuelve a la lista de funciones útiles para filtrar y mutar y describe cómo cada operación cambia cuando la juntamos con un group_by.
+
+R/ cuando queremos hacer un conteo de observaciones y que de una vez queden
+
+# agrupadas por la variable que le digamos. Cuando sort = TRUE los organiza
+
+# descendentemente.
+
+# Podemos usar count() cuando solo queremos hacer conteos de una agrupacion,
+
+# pero si de esa grupacion queremos hacer otra operacion que no sea conteo,
+
+# debemos usar group_by()
+
+Vamos a por los peores aviones. Investiga el top 10 de qué aviones (número de cola y compañía) llegaron más tarde a su destino.
+
+not_cancelled %>% group_by(carrier, tailnum) %>%
+        
+        summarise(total_flights = n(),
+                  
+                  total_delay = sum(dep_delay>0) + sum(arr_delay>0)) %>%
+        
+        arrange(desc(total_delay))
+
+Queremos saber qué hora del día nos conviene volar si queremos evitar los retrasos en la salida.
+
+Difícil: Queremos saber qué día de la seman nos conviene volar si queremos evitar los retrasos en la salida.
+
+
+
+#R/ Las mejores horas son entre las 4 y 6am
+
+not_cancelled_hour <- not_cancelled %>%
+        
+        mutate(hour_dep_time = dep_time %/% 100)
+
+
+
+view(not_cancelled_hour %>% group_by(origin, hour_dep_time) %>%
+             
+             summarise(mean_dep_delay = mean(dep_delay)) %>%
+             
+             arrange(hour_dep_time, origin))
+
+# Difícil: Queremos saber qué día de la seman nos conviene volar si
+
+# queremos evitar los retrasos en la salida.
+
+#R/ El sabado es el mejor dia
+
+ale_flights <- mutate(not_cancelled, weekDay = weekdays(time_hour))
+
+group_by(ale_flights, weekDay) %>%
+        
+        summarise(mean_dep_delay = mean(dep_delay)) %>%
+        
+        arrange(mean_dep_delay)
+
+Para cada destino, calcula el total de minutos de retraso acumulado.
+
+Para cada uno de ellos, calcula la proporción del total de retraso para dicho destino.
+
+per_dest <- not_cancelled %>% group_by(dest) %>%
+        
+        summarise(sum_dep_delay = sum(dep_delay), total_flights = n())
+
+total_flights_records <- as.integer(count(not_cancelled))
+
+not_cancelled %>% group_by(dest) %>%
+        
+        summarise(sum_dep_delay = sum(dep_delay),
+                  
+                  total_flights = n(),
+                  
+                  perc_dest = total_flights / total_flights_records) %>%
+        
+        arrange(desc(perc_dest))
+
+Los retrasos suelen estar correlacionados con el tiempo. Aunque el problema que ha causado el primer retraso de un avión se resuelva, el resto de vuelos se retrasan para que salgan primero los aviones que debían haber partido antes. Intenta usar la función lag() explora cómo el retraso de un avión se relaciona con el retraso del avión inmediatamente anterior o posterior.
+
+count(not_cancelled, month, day, tailnum) %>% arrange(desc(n))
+
+my_flights <- not_cancelled %>%
+        
+        arrange(month, day, tailnum, sched_dep_time, origin, dest) %>%
+        
+        mutate(fl_behind = lag(flight), fl_ahead = lead(flight)) %>%
+        
+        select(month, day, tailnum, origin, dest, sched_dep_time, dep_time,
+               
+               dep_delay, carrier, flight, fl_behind, fl_ahead) %>%
+        
+        filter(tailnum == "N732US" & month== 2 & day== 15)
+
+# desde la optica de tailnum, no se evidencia que si un avion llega tarde a su
+
+# destino, afecte el siguiente vuelo que parte desde ese destino hacia uno nuevo
+
+# usando el mismo avion.
+
+
+
+my_flights <- not_cancelled %>%
+        
+        arrange(month, day, origin, dep_time, origin, dest) %>%
+        
+        mutate(fl_behind = lag(flight), fl_ahead = lead(flight)) %>%
+        
+        select(month, day, origin, dest, dep_time, sched_dep_time, 
+               
+               dep_delay, carrier, flight, fl_behind, fl_ahead)
+
+# Desde la optica del aeropuerto de origen, tampoco se evidencia que el retraso
+
+# de un vuelo afecte los demas que estan pendientes por salir, dado que los
+
+# aeropuertos tienen varias pistas para que puedan darse varios despeques
+
+# al mismo tiempo
+
+lead(1:10, 1)
+
+lead(1:10, 2)
+
+
+
+lag(1:10, 1)
+
+lead(1:10, 1)
+
+
+
+x <- runif(5)
+
+cbind(ahead = lead(x), x, behind = lag(x))
+
+
+
+# Use order_by if data not already ordered
+
+df <- data.frame(year = 2000:2005, value = (0:5) ^ 2)
+
+scrambled <- df[sample(nrow(df)), ]
+
+
+
+wrong <- mutate(scrambled, prev = lag(value))
+
+arrange(wrong, year)
+
+
+
+right <- mutate(scrambled, prev = lag(value, order_by = year))
+
+arrange(right, year)
+
+Vamos a por los destinos esta vez. Localiza vuelos que llegaron 'demasiado rápido' a sus destinos. Seguramente, el becario se equivocó al introducir el tiempo de vuelo y se trate de un error en los datos. Calcula para ello el cociente entre el tiempo en el aire de cada vuelo relativo al tiempo de vuelo del avión que tardó menos en llegar a dicho destino. ¿Qué vuelos fueron los que más se retrasaron en el aire?
+        
+        fastest_flights <- not_cancelled %>% group_by(origin, dest) %>%
+        
+        mutate(fastest = min(air_time)) %>%
+        
+        arrange(origin, dest, air_time)
+
+# Con esta sentencia anterior, le metimos la variable fastest a cada registro
+
+# del dataframe
+
+fastest_flights %>% mutate(vs_fastest = air_time / fastest) %>%
+        
+        select(month, day, dep_time, dep_delay, arr_time, arr_delay, carrier,
+               
+               origin, dest, air_time, fastest, vs_fastest) %>%
+        
+        arrange(desc(vs_fastest))
+
+Encuentra todos los destinos a los que vuelan dos o más compañías y para cada uno de ellos, crea un ranking de las mejores compañías para volar a cada destino (utiliza el criterio que consideres más conveniente como probabilidad de retraso, velocidad o tiempo de vuelo, número de vuelos al año..)
+
+Finalmente, para cada avión (basándonos en el número de cola) cuenta el número de vuelos que hace antes de sufrir su primer retraso de más de una hora. Valora entonces la fiabilidad del avión o de la compañía aérea asociada al mismo.
+
+view(
+        
+        not_cancelled %>% group_by(origin, dest) %>%
+                
+                filter(n_distinct(carrier) >=2) %>%
+                
+                summarise(min_delay = min(dep_delay + arr_delay))
+        
+)
+
+# No pude terminarla. Agradeceria comentarios sobre como terminarl
+
+
+
+
+
+
+
+
+
 
 
 
