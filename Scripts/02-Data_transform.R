@@ -532,6 +532,8 @@ flights %>%
                   delay_dest = ) # LO DEJO AQui. MIRAR MAÑANA ESTA ZONA. MIRAR EL RETRASO QUE HAY POR COMPAÑÍA Y AEROPUERTO. VER EL RETRASO DE LA COMPAÑÍA SOLO. VER EL RETRASO DEL AEROPUERTO
 # SOLO, Y VER LA SUMA O DIVISIÓN ETNRE LOS DOS
 
+asdasdasd
+
 malas_comps <- flights %>%
         group_by(carrier) %>%
         filter(rank(desc(dep_delay)) < 10)
