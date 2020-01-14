@@ -1148,8 +1148,6 @@ view(
         
 )
 
-# No pude terminarla. Agradeceria comentarios sobre como terminarl
-
 
 
 
