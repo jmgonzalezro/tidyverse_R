@@ -33,7 +33,11 @@ str(parse_date(c("1988-05-19", "2018-05-30")))
 # parse_number() es más flexible, puedes tener decimales... o números en diferentes formas y separadores
 # parse_character()
 
-
+# parse_number()
+  # puede tener separadores de decimales por , o .
+  # puede tener valores monetarios 100€, $1000
+  # porcentajes 12%
+  # agrupaciones 1,000,000
 
 
 
