@@ -20,6 +20,26 @@ cars %>% View()
 
 
 
+read_csv("x;y\n1;2")
+
+
+# parse_* 
+parse_logical(c("TRUE", "FALSE", "FALSE", "NA"))
+str(parse_logical(c("TRUE", "FALSE", "FALSE", "NA")))
+str(parse_integer(c("1", "2", "3", "4")))
+str(parse_date(c("1988-05-19", "2018-05-30")))
+
+# parse_double() solo valores numéricos
+# parse_number() es más flexible, puedes tener decimales... o números en diferentes formas y separadores
+# parse_character()
+
+
+
+
+
+
+
+
 
 
 
