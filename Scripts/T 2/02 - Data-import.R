@@ -151,3 +151,76 @@ parse_time(v7)
 
 
 
+# Ha generado un archivo de challenge.csv
+challenge <- read_csv(
+  readr_example("challenge.csv"),
+  col_types = cols(
+    x = col_double(), #parse_dobule()
+    y = col_date() # parse_date()
+  )
+)
+
+challenge2 <-  read_csv(readr_example("challenge.csv"), guess_max = 1001)
+head(challenge2)
+# esto sirve para inducarke ak readr_example el número de filas que tiene que tomar
+# para hacer el cálculo del tipo de parseado que tiene que aplicar.
+
+challenge3 <- read_csv(readr_example("challenge.csv"), 
+                       col_types = cols(.default = col_character()))
+head(challenge3)
+# el col_character no peta nunca así que e smuuy útil para hacer una primera lectura
+# si se usa con type_convert es muy útil
+type_convert(challenge3)
+
+# Usemoslo en un df de prueba
+df <- tribble(
+  ~x, ~y,
+  "1", "1.2",
+  "2", "3.86",
+  "3", "3.1416"
+)
+type_convert(df)
+
+read_lines(readr_example("challenge.csv"))
+read_file(readr_example("challenge.csv"))
+
+
+
+
+
+# Escritura de ficheros
+# write_csv(), write_tsv()
+# strings en UTF8
+# date / datetimes ISO8601
+# write_excel.csv() por si alguien lo va a usar de marketing para que se abra en excel
+
+write_csv(challenge, path = "Scripts/") # por ejemplo
+read_csv("Scripts/", gues_max = 1001)
+
+# el csv no es el mejor sistema para cachear resultados parciales porque necesitaremos
+# reespecificar cómo cargar cada columna de datos para evitar problemas.
+
+# Tenemos alternativas como:
+write_rds(challenge, path = "Scripts/challenge.rds") # Son formatos de R específicos en bianrio. Rdatastore
+read_rds("Scripts/challenge.rds")
+
+library(feather)
+write_feather(challenge, path = "Scripts/challenge.feather") # archivos muy ligeros para la lectura de datos
+read_feather("Scripts/challenge.feather") # lectura y escritura muy muy rápidas
+
+
+# Hay otros tipos de datos/librerías en R que conviene conocer como:
+# haven -> SPSS, Stata, SAS
+# readxl -> .xml, xmls
+# DBI -> sirve para trabajar con paquetes de RMySQL, RSQLite, RPostgreSQL
+
+
+
+
+
+
+
+
+
+
+
